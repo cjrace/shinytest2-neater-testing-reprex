@@ -14,6 +14,7 @@ ui <- fluidPage(
       "renderTable_clean", "renderTable_error",
       "reactable_clean", "reactable_error",
       "ggplot2_clean", "ggplot2_error",
+      "ggiraph_clean", "ggiraph_error",
       "leaflet_clean", "leaflet_error"
     )
   ),
@@ -48,6 +49,14 @@ ui <- fluidPage(
     plotOutput("error_ggplot")
   ),
   conditionalPanel(
+    condition = "input.panel_selector == 'ggiraph_clean'",
+    plotOutput("clean_ggiraph")
+  ),
+  conditionalPanel(
+    condition = "input.panel_selector == 'ggiraph_error'",
+    plotOutput("error_ggiraph")
+  ),
+  conditionalPanel(
     condition = "input.panel_selector == 'leaflet_clean'",
     leafletOutput("clean_map")
   ),
@@ -70,7 +79,7 @@ server <- function(input, output, session) {
   })
 
   output$error_ggplot <- renderPlot({
-    ggplot(iris[0], aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
+    ggplot(iris, aes(x = NOT_REAL_COL, y = Sepal.Width, color = Species)) +
       geom_point() +
       theme_minimal()
   })

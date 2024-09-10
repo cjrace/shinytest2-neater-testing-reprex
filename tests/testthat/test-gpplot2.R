@@ -4,30 +4,23 @@ app <- AppDriver$new()
 # Wait for the table to render
 app$wait_for_idle(50)
 
-check_rendertable_rows <- function(object_name) {
-  table_html <- app$get_values(output = object_name)[[1]]
-  
-  # Return 0 as number of rows if there's an error
-  # Table html has a length 1 if no error, will be a list of stuff if error is present
-  if (length(table_html[[object_name]]) != 1) {
-    return(0)
-  }
-  
-  number_of_rendered_rows <- table_html |>
-    unlist() |>
-    rvest::read_html() |>
-    rvest::html_elements("tr") |>
+check_ggplot_rendered <- function(object_name) {
+  # Save 1 if image exits, 0 if not
+  plot_img_length <- app$get_html(paste0("#", object_name)) |> 
+    rvest::read_html() |> 
+    rvest::html_elements("img") |> 
     length()
-  
-  return(number_of_rendered_rows)
+
+  # Give a true if the image exists, a false if not
+  return(as.logical(plot_img_length))
 }
 
-test_that("renderTable renders, and has rows", {
-  app$set_inputs(panel_selector = "renderTable_clean")
+test_that("ggplot2 renders, and has data", {
+  app$set_inputs(panel_selector = "ggplot2_clean")
   app$wait_for_idle(50)
-  expect_gt(check_rendertable_rows("clean_rendertable"), 0)
+  expect_true(check_ggplot_rendered("clean_ggplot"))
   
-  app$set_inputs(panel_selector = "renderTable_error")
+  app$set_inputs(panel_selector = "ggplot2_error")
   app$wait_for_idle(50)
-  expect_gt(check_rendertable_rows("error_rendertable"), 0)
+  expect_true(check_ggplot_rendered("error_ggplot"))
 })
