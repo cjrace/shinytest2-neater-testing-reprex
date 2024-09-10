@@ -1,8 +1,8 @@
 library(shiny)
 library(reactable)
 library(ggplot2)
+library(ggiraph)
 library(leaflet)
-library(bslib)
 
 ui <- fluidPage(
   titlePanel("Testing out shinytest2 approaches"),
@@ -50,11 +50,11 @@ ui <- fluidPage(
   ),
   conditionalPanel(
     condition = "input.panel_selector == 'ggiraph_clean'",
-    plotOutput("clean_ggiraph")
+    girafeOutput("clean_ggiraph")
   ),
   conditionalPanel(
     condition = "input.panel_selector == 'ggiraph_error'",
-    plotOutput("error_ggiraph")
+    girafeOutput("error_ggiraph")
   ),
   conditionalPanel(
     condition = "input.panel_selector == 'leaflet_clean'",
@@ -67,41 +67,67 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  # Reactable outputs
+  # Reactable outputs =========================================================
   output$clean_reactable <- renderReactable(reactable(iris))
   output$error_reactable <- renderReactable(reactable(iris[0]))
 
-  # ggplot2 output
+  # renderTable output ========================================================
+  output$clean_rendertable <- renderTable(head(iris))
+  output$error_rendertable <- renderTable(head(iris[0]))
+  
+  # ggplot2 output ============================================================
   output$clean_ggplot <- renderPlot({
-    ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width, color = Species)) +
-      geom_point() +
+    ggplot(iris, aes(x = Sepal.Length, color = Species)) +
+      geom_bar() +
       theme_minimal()
   })
 
   output$error_ggplot <- renderPlot({
-    ggplot(iris, aes(x = NOT_REAL_COL, y = Sepal.Width, color = Species)) +
-      geom_point() +
+    ggplot(iris, aes(x = NOT_REAL_COL, color = Species)) +
+      geom_bar() +
       theme_minimal()
   })
 
-  # renderTable output
-  output$clean_rendertable <- renderTable(head(iris))
-  output$error_rendertable <- renderTable(head(iris[0]))
+  # ggiraph output ============================================================
+  output$clean_ggiraph <- renderGirafe({
+    gg <- ggplot(iris, aes(x = Species, fill = Species)) +
+      geom_bar_interactive(aes(tooltip = Species)) +
+      theme_minimal()
+    girafe(ggobj = gg)
+  })
+  
+  output$error_ggiraph <- renderGirafe({
+    gg <- ggplot(iris, aes(x = NOT_REAL_COL, fill = Species)) +
+      geom_bar_interactive(aes(tooltip = Species)) +
+      theme_minimal()
+    girafe(ggobj = gg)
+  })
 
-  # Leaflet output
-  output$clean_map <- renderLeaflet({
+  # Leaflet output ============================================================
+  output$clean_map <-  renderLeaflet({
     leaflet() %>%
       addTiles() %>%
       setView(lng = -1.5536, lat = 54.5245, zoom = 6) %>%
-      addMarkers(lng = -1.5536, lat = 54.5245, popup = "Darlington")
+      addPolygons(
+        lng = c(-1.6, -1, -1.4),
+        lat = c(54.6, 56, 54.8),
+        fillColor = "blue",       
+        fillOpacity = 0.4,          
+        popup = "Darlington Area"
+      )
   })
 
-  # TODO: make an erroring leaflet map
-  output$error_map <- renderLeaflet({
+  output$error_map <-  renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
-      setView(lng = -1.5536, lat = 54.5245, zoom = "broken") %>%
-      addMarkers(lng = -1.5536, lat = 54.5245, popup = "Darlington")
+      addTiles(error = TRUE) %>%
+      setView(lng = -1.5536, lat = 54.5245, zoom = 6) %>%
+      addPolygons(
+        lng = c(-1.6, -1, -1.4),
+        lat = c(54.6, 56, 54.8),
+        fillColor = "blue",       
+        fillOpacity = 0.4,          
+        popup = "Darlington Area"
+      )
   })
 }
 
